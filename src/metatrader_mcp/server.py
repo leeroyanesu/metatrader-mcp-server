@@ -272,7 +272,7 @@ def cancel_pending_orders_by_symbol(ctx: Context, symbol: str) -> dict:
 	client = get_client(ctx)
 	return client.order.cancel_pending_orders_by_symbol(symbol=symbol)
 
-if __name__ == "__main__":
+def main():
 	load_dotenv()
 	parser = argparse.ArgumentParser(description="MetaTrader MCP Server")
 	parser.add_argument("--login",    type=str, help="MT5 login")
@@ -280,7 +280,10 @@ if __name__ == "__main__":
 	parser.add_argument("--server",   type=str, help="MT5 server name")
 	parser.add_argument("--path",     type=str, help="Path to MT5 terminal executable (optional)")
 
-	args = parser.parse_args()
+	# If we are being called via asyncio.run(main()) from another script,
+	# we might want to skip sys.argv parsing if it's not intended for us.
+	# But here we assume it's okay because main.py passes relevant args.
+	args, unknown = parser.parse_known_args()
 
 	# inject into lifespan via env vars
 	if args.login:    os.environ["login"]    = args.login
@@ -292,3 +295,6 @@ if __name__ == "__main__":
 	mcp.run(
 		transport="stdio"
 	)
+
+if __name__ == "__main__":
+	main()
