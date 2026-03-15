@@ -1,0 +1,13 @@
+{
+    "folders": [
+        {
+            "path": "."
+        },
+        {
+            "path": "../tradingview-mcp-main"
+        },
+        {
+            "path": "../../PycharmProjects/PythonProject"
+        }
+    ]
+}
