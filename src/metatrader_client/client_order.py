@@ -57,8 +57,8 @@ class MT5Order:
         return get_pending_orders_by_id(self._connection, id)
 
 
-    def place_market_order(self, *, type: str, symbol: str, volume: Union[float, int]):
-        return place_market_order(self._connection, type=type, symbol=symbol, volume=volume)
+    def place_market_order(self, *, type: str, symbol: str, volume: Union[float, int], stop_loss: Optional[Union[float, int]] = 0.0, take_profit: Optional[Union[float, int]] = 0.0):
+        return place_market_order(self._connection, type=type, symbol=symbol, volume=volume, stop_loss=stop_loss, take_profit=take_profit)
     
     
     def place_pending_order(self, *, type: str, symbol: str, volume: Union[float, int], price: Union[float, int], stop_loss: Optional[Union[float, int]] = 0.0, take_profit: Optional[Union[float, int]] = 0.0):

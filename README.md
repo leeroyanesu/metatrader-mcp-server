@@ -45,6 +45,7 @@ You → AI Assistant → MCP Server → MetaTrader 5 → Your Trades
 - **📊 Full Market Access** - Get real-time prices, historical data, and symbol information
 - **💼 Complete Account Control** - Check balance, equity, margin, and trading statistics
 - **⚡ Order Management** - Place, modify, and close orders with simple commands
+- **🎯 Atomic SL/TP** - Set stop loss and take profit at order open time — no two-step modify needed
 - **🔒 Secure** - All credentials stay on your machine
 - **🌐 Flexible Interfaces** - Use as MCP server or REST API
 - **📖 Well Documented** - Comprehensive guides and examples
@@ -76,12 +77,12 @@ By using this software, you acknowledge that:
 
 Before you begin, make sure you have:
 
-1. **Python 3.10 or higher** - [Download here](https://www.python.org/downloads/)
+1. **Python 3.13 or higher** - [Download here](https://www.python.org/downloads/)
 2. **MetaTrader 5 terminal** - [Download here](https://www.metatrader5.com/en/download)
 3. **MT5 Trading Account** - Demo or live account credentials
-   - Login number
+   - Login number (integer)
    - Password
-   - Server name (e.g., "MetaQuotes-Demo")
+   - Server name (e.g., `"Deriv-Demo"`)
 
 ## 🚀 Quick Start
 
@@ -164,8 +165,6 @@ metatrader-http-server --login YOUR_LOGIN --password YOUR_PASSWORD --server YOUR
 
 **Optional: Specify Custom MT5 Terminal Path**
 
-If your MT5 terminal is installed in a non-standard location, add the `--path` argument:
-
 ```bash
 metatrader-http-server --login YOUR_LOGIN --password YOUR_PASSWORD --server YOUR_SERVER --path "C:\Program Files\MetaTrader 5\terminal64.exe" --host 0.0.0.0 --port 8000
 ```
@@ -247,9 +246,9 @@ from metatrader_client import MT5Client
 
 # Connect to MT5
 config = {
-    "login": 12345678,
+    "login": 40931844,           # Must be an integer
     "password": "your_password",
-    "server": "MetaQuotes-Demo"
+    "server": "Deriv-Demo"
 }
 client = MT5Client(config)
 client.connect()
@@ -295,9 +294,9 @@ client.disconnect()
 - `get_symbol_info` - Get detailed symbol information
 
 ### Order Execution
-- `place_market_order` - Execute instant BUY/SELL orders
-- `place_pending_order` - Place limit/stop orders for future execution
-- `modify_position` - Update stop loss or take profit
+- `place_market_order` - Execute instant BUY/SELL orders **with stop loss and take profit at open time**
+- `place_pending_order` - Place limit/stop orders with optional SL/TP
+- `modify_position` - Update stop loss or take profit on an existing position
 - `modify_pending_order` - Modify pending order parameters
 
 ### Position Management
@@ -330,12 +329,12 @@ client.disconnect()
 Instead of putting credentials in the command line, create a `.env` file:
 
 ```env
-LOGIN=12345678
+LOGIN=40931844
 PASSWORD=your_password
-SERVER=MetaQuotes-Demo
+SERVER=Deriv-Demo
 
 # Optional: Specify custom MT5 terminal path (auto-detected if not provided)
-# PATH=C:\Program Files\MetaTrader 5\terminal64.exe
+# PATH=C:\Program Files\MetaTrader 5 Terminal\terminal64.exe
 ```
 
 Then start the server without arguments:
@@ -344,7 +343,7 @@ Then start the server without arguments:
 metatrader-http-server
 ```
 
-The server will automatically load credentials from the `.env` file.
+> ⚠️ **Important**: `LOGIN` must be an integer (no quotes). The Python client casts it with `int()` before passing to the MT5 API.
 
 ### Custom Port and Host
 
@@ -354,13 +353,11 @@ metatrader-http-server --host 127.0.0.1 --port 9000
 
 ### Connection Parameters
 
-The MT5 client supports additional configuration:
-
 ```python
 config = {
-    "login": 12345678,
+    "login": 40931844,          # integer — required
     "password": "your_password",
-    "server": "MetaQuotes-Demo",
+    "server": "Deriv-Demo",
     "path": None,               # Path to MT5 terminal executable (default: auto-detect)
     "timeout": 60000,           # Connection timeout in milliseconds (default: 60000)
     "portable": False,          # Use portable mode (default: False)
@@ -370,19 +367,6 @@ config = {
     "debug": True               # Enable debug logging (default: False)
 }
 ```
-
-**Configuration Options:**
-
-- **login** (int, required): Your MT5 account login number
-- **password** (str, required): Your MT5 account password
-- **server** (str, required): MT5 server name (e.g., "MetaQuotes-Demo")
-- **path** (str, optional): Full path to the MT5 terminal executable. If not specified, the client will automatically search standard installation directories
-- **timeout** (int, optional): Connection timeout in milliseconds. Default: 60000 (60 seconds)
-- **portable** (bool, optional): Enable portable mode for the MT5 terminal. Default: False
-- **max_retries** (int, optional): Maximum number of connection retry attempts. Default: 3
-- **backoff_factor** (float, optional): Exponential backoff factor for retry delays. Default: 1.5
-- **cooldown_time** (float, optional): Minimum time in seconds between connection attempts. Default: 2.0
-- **debug** (bool, optional): Enable detailed debug logging for troubleshooting. Default: False
 
 ---
 
@@ -398,6 +382,7 @@ config = {
 | Open WebUI Integration | ✅ Complete |
 | OpenAPI Documentation | ✅ Complete |
 | PyPI Package | ✅ Published |
+| Atomic SL/TP on Market Orders | ✅ Complete |
 | Google ADK Integration | 🚧 In Progress |
 | WebSocket Support | 📋 Planned |
 | Docker Container | 📋 Planned |
@@ -410,7 +395,7 @@ config = {
 
 ```bash
 # Clone the repository
-git clone https://github.com/ariadng/metatrader-mcp-server.git
+git clone https://github.com/leeroyanesu/metatrader-mcp-server.git
 cd metatrader-mcp-server
 
 # Install in development mode
@@ -439,7 +424,7 @@ metatrader-mcp-server/
 │   └── metatrader_openapi/     # HTTP/REST API server
 ├── tests/                      # Test suite
 ├── docs/                       # Documentation
-└── pyproject.toml             # Project configuration
+└── pyproject.toml              # Project configuration
 ```
 
 ---
@@ -448,7 +433,7 @@ metatrader-mcp-server/
 
 Contributions are welcome! Here's how you can help:
 
-1. **Report Bugs** - [Open an issue](https://github.com/ariadng/metatrader-mcp-server/issues)
+1. **Report Bugs** - [Open an issue](https://github.com/leeroyanesu/metatrader-mcp-server/issues)
 2. **Suggest Features** - Share your ideas in issues
 3. **Submit Pull Requests** - Fix bugs or add features
 4. **Improve Documentation** - Help make docs clearer
@@ -478,15 +463,17 @@ Contributions are welcome! Here's how you can help:
 
 ## 🆘 Getting Help
 
-- **Issues**: [GitHub Issues](https://github.com/ariadng/metatrader-mcp-server/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/ariadng/metatrader-mcp-server/discussions)
-- **LinkedIn**: [Connect with me](https://linkedin.com/in/ariadhanang)
+- **Issues**: [GitHub Issues](https://github.com/leeroyanesu/metatrader-mcp-server/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/leeroyanesu/metatrader-mcp-server/discussions)
 
 ### Common Issues
 
+**`(-2, 'Invalid "login" argument')`**
+- The `login` must be an **integer**, not a string. Ensure `MT5_LOGIN` in `.env` has no quotes and the code casts it with `int()`.
+
 **"Connection failed"**
 - Ensure MT5 terminal is running
-- Check that algorithmic trading is enabled
+- Check that algorithmic trading is enabled (`Tools → Options → Expert Advisors`)
 - Verify your login credentials are correct
 
 **"Module not found"**
@@ -516,19 +503,33 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📊 Project Stats
 
-- **Version**: 0.2.9
-- **Python**: 3.10+
+- **Version**: 0.3.0
+- **Python**: 3.13+
 - **License**: MIT
 - **Status**: Active Development
 
 ---
 
+## 📋 Changelog
+
+### v0.3.0 — 2026-03-15
+- ✅ `place_market_order` now accepts `stop_loss` and `take_profit` at open time
+- ✅ AI is instructed to always set SL/TP atomically — no post-open `modify_position` calls
+- ✅ Fixed parameter pass-through bug in `MT5Order` wrapper (`client_order.py`)
+- ✅ Python 3.13+ minimum requirement
+- 🔄 Updated GitHub URLs and author to `leeroyanesu`
+
+### v0.2.9 (upstream)
+- Initial public release with MCP server, HTTP/REST API, Open WebUI support
+
+---
+
 <div align="center">
 
-**Made with ❤️ by [Aria Dhanang](https://github.com/ariadng)**
+**Made with ❤️ by [leeroyanesu](https://github.com/leeroyanesu)**
 
 ⭐ Star this repo if you find it useful!
 
-[PyPI](https://pypi.org/project/metatrader-mcp-server/) • [GitHub](https://github.com/ariadng/metatrader-mcp-server) • [Issues](https://github.com/ariadng/metatrader-mcp-server/issues)
+[PyPI](https://pypi.org/project/metatrader-mcp-server/) • [GitHub](https://github.com/leeroyanesu/metatrader-mcp-server) • [Issues](https://github.com/leeroyanesu/metatrader-mcp-server/issues)
 
 </div>
