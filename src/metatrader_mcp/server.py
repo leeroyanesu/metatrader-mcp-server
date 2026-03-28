@@ -166,39 +166,17 @@ def get_pending_orders_by_id(ctx: Context, id: Union[int, str]) -> str:
 	return df.to_csv() if hasattr(df, 'to_csv') else str(df)
 
 @mcp.tool()
-def place_market_order(
-	ctx: Context,
-	symbol: str,
-	volume: float,
-	type: str,
-	stop_loss: Optional[Union[int, float]] = 0.0,
-	take_profit: Optional[Union[int, float]] = 0.0,
-) -> dict:
+def place_market_order(ctx: Context, symbol: str, volume: float, type: str, stop_loss: Optional[Union[int, float]] = 0.0, take_profit: Optional[Union[int, float]] = 0.0) -> dict:
 	"""
-	Place a market order (BUY or SELL) with optional stop loss and take profit.
-
-	IMPORTANT: Always provide stop_loss and take_profit when known — this sets them
-	atomically at order open time, which is faster and more reliable than opening
-	first and modifying afterwards. Never open a naked position and then call
-	modify_position to add SL/TP as a separate step unless there is a specific
-	reason to do so.
-
-	Parameters:
-		symbol:      Symbol name (e.g., 'EURUSD', 'Volatility 50 Index')
-		volume:      Lot size (e.g., 0.01)
-		type:        Order type — 'BUY' or 'SELL'
-		stop_loss:   Stop loss price level (0.0 = no SL). Provide whenever possible.
-		take_profit: Take profit price level (0.0 = no TP). Provide whenever possible.
+	Place a market order. Parameters:
+		symbol: Symbol name (e.g., 'EURUSD')
+		volume: Lot size. (e.g. 1.5)
+		type: Order type ('BUY' or 'SELL')
+		stop_loss: Stop loss price.
+		take_profit: Take profit price.
 	"""
 	client = get_client(ctx)
-	return client.order.place_market_order(
-		symbol=symbol,
-		volume=volume,
-		type=type,
-		stop_loss=stop_loss,
-		take_profit=take_profit,
-	)
-
+	return client.order.place_market_order(symbol=symbol, volume=volume, type=type, stop_loss=stop_loss, take_profit=take_profit)
 
 @mcp.tool()
 def place_pending_order(ctx: Context, symbol: str, volume: float, type: str, price: float, stop_loss: Optional[Union[int, float]] = 0.0, take_profit: Optional[Union[int, float]] = 0.0) -> dict:

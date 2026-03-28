@@ -136,6 +136,15 @@ def send_order(
 		if not isinstance(take_profit, float):
 			return { "success": False, "message": "Invalid SL or TP" }
 		
+	# Setup price for market orders before validation
+	if action == TradeRequestActions.DEAL and price == 0:
+		tick = mt5.symbol_info_tick(symbol)
+		if tick is None:
+			return { "success": False, "message": f"Failed to get tick for {symbol}", "data": None }
+		price = tick.ask if order_type == OrderType.BUY else tick.bid
+		digits = symbol_info.digits
+		price = round(price, digits)
+
 	if order_type in [OrderType.BUY, OrderType.BUY_LIMIT, OrderType.BUY_STOP]:
 		if (stop_loss != 0) and (stop_loss >= price):
 			return { "success": False, "message": "Stop loss must be less than price" }
@@ -165,16 +174,6 @@ def send_order(
 			if order_type not in [OrderType.BUY, OrderType.SELL]:
 				return { "success": False, "message": "Invalid order type, must be BUY or SELL", "data": None }
 
-			# Ensure the price is not zero
-			if price == 0:
-				tick = mt5.symbol_info_tick(symbol)
-				if tick is None:
-					return { "success": False, "message": "Failed to get tick for {symbol}", "data": None }
-				price = tick.ask if order_type == OrderType.BUY else tick.bid
-				# Round to broker's precision
-				digits = symbol_info.digits
-				price = round(price, digits)
-
 			request = {
 				"symbol": symbol,
 				"volume": volume,
@@ -196,10 +195,12 @@ def send_order(
 			
 			response = mt5.order_send(request)
 
-			error_code, error_description = mt5.last_error()
-			
-			if error_code < 0:
-				return { "success": False, "message": f"Error {error_code}: {error_description}", "data": None }
+			if response is None:
+				error_code, error_description = mt5.last_error()
+				return { "success": False, "message": f"OrderSend failed. Sys Error {error_code}: {error_description}", "data": None }
+
+			if response.retcode != mt5.TRADE_RETCODE_DONE:
+				return { "success": False, "message": f"Trade rejected (Code {response.retcode}): {response.comment}", "data": None }
 
 			return { "success": True, "message": "Order sent successfully", "data": response }
 
@@ -244,9 +245,13 @@ def send_order(
 
 			response = mt5.order_send(request)
 
-			error_code, error_description = mt5.last_error()
-			if error_code < 0:
-				return { "success": False, "message": f"Error {error_code}: {error_description}", "data": None }
+			if response is None:
+				error_code, error_description = mt5.last_error()
+				return { "success": False, "message": f"OrderSend failed. Sys Error {error_code}: {error_description}", "data": None }
+				
+			if response.retcode != mt5.TRADE_RETCODE_DONE:
+				return { "success": False, "message": f"Trade rejected (Code {response.retcode}): {response.comment}", "data": None }
+
 			return { "success": True, "message": "Order sent successfully", "data": response }
 
 		# --------------------
